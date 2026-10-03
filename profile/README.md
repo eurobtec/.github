@@ -19,6 +19,7 @@ ROS 2 driver, and reusable ucSim tooling.
 | [**rob3**](https://github.com/eurobtec/rob3) | ROB3 firmware reverse-engineering: an assembling 1:1 annotated 8031 disassembly (byte-identical to the EPROM), a two-layer golden-byte + behavioral ucSim test rig, hardware reference docs, and Arduino bench bring-up rigs. The source of truth for the protocol and hardware. |
 | [**rob3_py**](https://github.com/eurobtec/rob3_py) | Pure-Python library for the ROB3 RS-232 low-level protocol: the wire-protocol codec, serial transport, joint↔count calibration, and a high-level client. ROS-independent; verified against the real ROM in ucSim. |
 | [**rob3_ros2_driver**](https://github.com/eurobtec/rob3_ros2_driver) | ROS 2 driver for the ROB3 (JointState / FollowJointTrajectory / JointJog teleop / services), built on top of `rob3_py`, with URDF, launch, and a Docker + RViz/noVNC setup. |
+| [**rob3_ucsim**](https://github.com/eurobtec/rob3_ucsim) | ROB3-specific ucSim simulation harness: a `UCSimEngine` (subclass of `pyucsim.UCSimEngine`) that knows this firmware's memory landmarks and `cl_hw` peripherals, plus a motor/pot `Plant` model. Drives the ROB3 ROM and reads back its state; pairs with `rob3_py`. |
 
 ### ucSim tooling
 
@@ -39,13 +40,16 @@ ROS 2 driver, and reusable ucSim tooling.
                     ▼                              ┌──────────────┐
               ┌───────────┐   verified against     │   pyucsim    │
               │  rob3_py  │◄───── the real ROM ────┤  (Py client) │
-              │ (protocol │        in ucSim        └──────┬───────┘
-              │  library) │                               │
-              └─────┬─────┘                               ▼
-                    │ used by                       ┌──────────────┐
-                    ▼                               │  ucsim-mcp   │
-           ┌──────────────────┐                     │ (MCP server) │
-           │ rob3_ros2_driver │                     └──────────────┘
+              │ (protocol │        in ucSim        └──┬────────┬──┘
+              │  library) │                           │        │ subclassed by
+              └─────┬─────┘              used by ──────┘        ▼
+                    │ used by          ┌──────────────┐  ┌───────────────┐
+                    │                  │  ucsim-mcp   │  │  rob3_ucsim   │
+                    │                  │ (MCP server) │  │ (ROB3 harness │
+                    │                  └──────────────┘  │  + Plant)     │
+                    ▼                                     └───────────────┘
+           ┌──────────────────┐
+           │ rob3_ros2_driver │
            │   (ROS 2 node)   │
            └────────┬─────────┘
                     │ RS-232  (same bytes to the robot or to ucSim)
@@ -56,9 +60,11 @@ ROS 2 driver, and reusable ucSim tooling.
           ╚═══════════════════╝
 ```
 
-Because `rob3_py` speaks the *same* RS-232 bytes to the physical robot and to
-the ROM running in ucSim, the whole stack can be developed and tested without
-the hardware, then pointed at the real **ROB 3** arm unchanged.
+`rob3_ucsim` subclasses `pyucsim` to drive *this* ROM with ROB3 knowledge, and
+`rob3_ros2_driver` builds on `rob3_py`. Because `rob3_py` speaks the *same*
+RS-232 bytes to the physical robot and to the ROM running in ucSim, the whole
+stack can be developed and tested without the hardware, then pointed at the real
+**ROB 3** arm unchanged.
 
 ## Provenance convention
 
