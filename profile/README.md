@@ -20,6 +20,7 @@ ROS 2 driver, and reusable ucSim tooling.
 | [**rob3_py**](https://github.com/eurobtec/rob3_py) | Pure-Python library for the ROB3 RS-232 low-level protocol: the wire-protocol codec, serial transport, joint↔count calibration, and a high-level client. ROS-independent; verified against the real ROM in ucSim. |
 | [**rob3_ros2_driver**](https://github.com/eurobtec/rob3_ros2_driver) | ROS 2 driver for the ROB3 (JointState / FollowJointTrajectory / JointJog teleop / services), built on top of `rob3_py`, with URDF, launch, and a Docker + RViz/noVNC setup. |
 | [**rob3_ucsim**](https://github.com/eurobtec/rob3_ucsim) | ROB3-specific ucSim simulation harness: a `UCSimEngine` (subclass of `pyucsim.UCSimEngine`) that knows this firmware's memory landmarks and `cl_hw` peripherals, plus a motor/pot `Plant` model. Drives the ROB3 ROM and reads back its state; pairs with `rob3_py`. |
+| [**tbps_compiler**](https://github.com/eurobtec/tbps_compiler) | Compiler, disassembler, source-level debugger, and native-8051 backend for the **Teach Box Programming System (TBPS)** — the robot's teach-pendant program language. Emits the exact bytes the firmware interprets from SRAM; every opcode is `[SIM]`-verified against the ROM in ucSim (direct load, RS-232 `0x81` upload/`0x80` readback, native==interpreter equivalence). |
 
 ### ucSim tooling
 
@@ -65,6 +66,11 @@ ROS 2 driver, and reusable ucSim tooling.
 RS-232 bytes to the physical robot and to the ROM running in ucSim, the whole
 stack can be developed and tested without the hardware, then pointed at the real
 **ROB 3** arm unchanged.
+
+`tbps_compiler` targets the robot's other input path — the Teach Box program
+store: it compiles TBPS source to the bytes the firmware's stored-program
+interpreter runs, and verifies them against the ROM via `rob3_ucsim` (direct
+SRAM load and the RS-232 `0x81` upload path).
 
 ## Provenance convention
 
